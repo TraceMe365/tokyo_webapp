@@ -131,7 +131,7 @@
                         var date = new Date(row['tokyo_plant_in_time']);
                         var formattedDate = date.toISOString().split('T')[0];
                         $("#reportOneTableBody").append(`<tr>
-                        <td>${date}</td>
+                        <td>${formattedDate}</td>
                         <td>${row['tokyo_vehicle_name']}</td>
                         <td>${row['tokyo_location_name']}</td>
                         <td>${row['tokyo_site_name']!=null?row['tokyo_site_name']:"N/A"}</td>
