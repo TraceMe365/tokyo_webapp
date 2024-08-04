@@ -17,7 +17,7 @@ class WialonController extends Controller
 
     public function __construct(Request $request)
     {
-        ini_set('max_execution_time', 300);
+        ini_set('max_execution_time', 600);
         $this->token = 'bb4a51dbe579347b6844c4dbf145ab7f729D06D4498EF2E85C4A40CEAAF38955F22D553F';
     }
 
