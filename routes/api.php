@@ -24,5 +24,9 @@ Route::controller(WialonController::class)->group(function () {
     Route::get('/getAllLocations', 'getAllLocations');
     Route::get('/reportOnePlantDurations', 'reportOnePlantDurations');
     Route::get('/reportOneSiteDurations', 'reportOneSiteDurations');
+    Route::get('/getGeofenceGroups', 'getGeofenceGroups');
+    Route::get('/getReportOneSingleLocation', 'getReportOneSingleLocation');
     Route::post('/getReportOne', 'getReportOne');
+    Route::get('/getPlants', 'getPlants');
+    Route::post('/getReportTwo', 'getReportTwo');
 });
