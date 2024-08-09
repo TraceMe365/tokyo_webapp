@@ -139,6 +139,23 @@
                         <button class="btn btn-danger" id="generateReportThree">Generate</button>
                     </div>
             </div>
+            <div class="row mb-3">
+                <table id="reportThreeTable" class="table table-striped mt-3">
+                    <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Plant</th>
+                        <th>Scheduled customer </th>
+                        <th>Planned dispatch time </th>
+                        <th>Re scheduled time</th>
+                        <th>Cancelled / postponed reason</th>
+                    </tr>
+                    </thead>
+                    <tbody id="reportThreeTableBody">
+
+                    </tbody>
+                </table>
+                </div>
         </div>
         </div>
    </div>
@@ -243,8 +260,8 @@
                     })
                 }
             });
-            if (!$.fn.DataTable.isDataTable('#reportOneTable')) {
-                $("#reportOneTable").DataTable({
+            if (!$.fn.DataTable.isDataTable('#reportTwoable')) {
+                $("#reportTwoTable").DataTable({
                     dom: 'Bfrtip',
                     buttons: [
                         'copy', 'csv', 'excel', 'pdf', 'print'
@@ -278,32 +295,37 @@
                 let data = JSON.parse(response);
                 console.log(data);
                 if(data.data){
-                    $("#reportTwoTableBody").html("");
+                    $("#reportThreeTableBody").html("");
                     (data.data).forEach(function(row,index){
-                        var date = new Date(row['tokyo_plant_out_time']);
+                        var date = new Date(row['date']);
                         var formattedDate = date.toISOString().split('T')[0];
-                        $("#reportTwoTableBody").append(`<tr>
+                        $("#reportThreeTableBody").append(`<tr>
                         <td>${formattedDate}</td>
-                        <td>${row['tokyo_pump_car_name']}</td>
-                        <td>${row['tokyo_location_name']}</td>
-                        <td>${row['tokyo_site_name']!=null?row['tokyo_site_name']:"N/A"}</td>
-                        <td>${row['tokyo_plant_out_time']}</td>
-                        <td>${row['tokyo_site_in_time']}</td>
-                        <td>N/A</td>
-                        <td>N/A</td>
+                        <td>${row['plant']}</td>
+                        <td><input type="text" id="${row['id']}-sch_cus" data-row="${index}" data-column="2" class="input"></td>
+                        <td><input type="text" id="${row['id']}-pln_dis" data-row="${index}" data-column="3" class="input"></td>
+                        <td><input type="text" id="${row['id']}-resch" data-row="${index}" data-column="4" class="input"></td>
+                        <td><input type="text" id="${row['id']}-canc" data-row="${index}" data-column="5" class="input"></td>
                         </tr>`);    
                     })
                 }
             });
-            if (!$.fn.DataTable.isDataTable('#reportOneTable')) {
-                $("#reportOneTable").DataTable({
+            if (!$.fn.DataTable.isDataTable('#reportThreeTable')) {
+                var table = $("#reportThreeTable").DataTable({
                     dom: 'Bfrtip',
                     buttons: [
                         'copy', 'csv', 'excel', 'pdf', 'print'
                     ]
                 });
+                $(".input").on('change',function(){
+                    var value = $(this).val();
+                    var row = $(this).data('row');
+                    var column = $(this).data('column');
+                    table.cell(row, column).data(value).draw();
+                })
             }
             $("#loader").css("display","none")
+            
         })
     
     });
