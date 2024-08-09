@@ -92,6 +92,9 @@
             </div>
         </div>
         <div class="tab-pane container fade" id="menu1">
+            <div class="row mt-5">
+                    <h3>Pump car idling report</h3>
+            </div>
                 <div class="row mt-5 mb-3">
                     <div class="col">
                         From:
@@ -126,6 +129,9 @@
                 </div>
         </div>
         <div class="tab-pane container fade" id="menu2">
+            <div class="row mt-5">
+                    <h3>Pump car cancelling report</h3>
+            </div>
             <div class="row mt-5 mb-3">
                     <div class="col">
                         From:
