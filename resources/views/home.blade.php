@@ -69,7 +69,7 @@
                     <div class="col">
                         <button class="btn btn-danger" id="generateReportOne">Generate</button>
                     </div>
-                </div>
+            </div>
             <div class="row mb-3">
             <table id="reportOneTable" class="table table-striped mt-3">
                 <thead>
@@ -125,7 +125,21 @@
                 </table>
                 </div>
         </div>
-        <div class="tab-pane container fade" id="menu2">...</div>
+        <div class="tab-pane container fade" id="menu2">
+            <div class="row mt-5 mb-3">
+                    <div class="col">
+                        From:
+                        <input type="datetime-local" name="fromReportThree" id="fromReportThree">
+                    </div>
+                    <div class="col">
+                        To:
+                        <input type="datetime-local" name="toReportThree" id="toReportThree">
+                    </div>
+                    <div class="col">
+                        <button class="btn btn-danger" id="generateReportThree">Generate</button>
+                    </div>
+            </div>
+        </div>
         </div>
    </div>
    <div class="overlay" id="loader" style="display:none">
@@ -239,6 +253,59 @@
             }
             $("#loader").css("display","none")
         })
+
+        $("#generateReportThree").on('click',async function(){
+            $("#loader").css("display","flex")
+            var from = $("#fromReportThree").val();
+            var to   = $("#toReportThree").val();
+
+            var form = new FormData();
+            
+            form.append("from", from);
+            form.append("to", to);
+            
+            var settings = {
+                "url": "http://localhost:8000/api/getReportThree",
+                "method": "POST",
+                "timeout": 0,
+                "processData": false,
+                "mimeType": "multipart/form-data",
+                "contentType": false,
+                "data": form
+            };
+
+            await $.ajax(settings).done(function (response) {
+                let data = JSON.parse(response);
+                console.log(data);
+                if(data.data){
+                    $("#reportTwoTableBody").html("");
+                    (data.data).forEach(function(row,index){
+                        var date = new Date(row['tokyo_plant_out_time']);
+                        var formattedDate = date.toISOString().split('T')[0];
+                        $("#reportTwoTableBody").append(`<tr>
+                        <td>${formattedDate}</td>
+                        <td>${row['tokyo_pump_car_name']}</td>
+                        <td>${row['tokyo_location_name']}</td>
+                        <td>${row['tokyo_site_name']!=null?row['tokyo_site_name']:"N/A"}</td>
+                        <td>${row['tokyo_plant_out_time']}</td>
+                        <td>${row['tokyo_site_in_time']}</td>
+                        <td>N/A</td>
+                        <td>N/A</td>
+                        </tr>`);    
+                    })
+                }
+            });
+            if (!$.fn.DataTable.isDataTable('#reportOneTable')) {
+                $("#reportOneTable").DataTable({
+                    dom: 'Bfrtip',
+                    buttons: [
+                        'copy', 'csv', 'excel', 'pdf', 'print'
+                    ]
+                });
+            }
+            $("#loader").css("display","none")
+        })
+    
     });
 </script>
 </html>

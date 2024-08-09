@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ReportOne;
+use App\Models\ReportThree;
 use App\Models\ReportTwo;
 use Carbon\Carbon;
 use Exception;
@@ -395,7 +396,7 @@ class WialonController extends Controller
             $to   = Carbon::parse($data['to'])->timestamp;
             if($to>$from){
                 DB::table('report_three')->truncate();
-                $this->getReportThreePlants($from,$to);
+                return $this->getReportThreePlants($from,$to);
             }
             else{
                 return response()->json(['message'=>'Please enter a valid date range']);    
@@ -404,6 +405,80 @@ class WialonController extends Controller
             return response()->json([
                 'message' => $th->getMessage(),
                 'line' => $th->getLine()
+            ]);
+        }
+    }
+
+    public function getReportThreePlants($from,$to)
+    {
+        $this->getSessionEID();
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+        CURLOPT_URL => 'https://hst-api.wialon.com/wialon/ajax.html?svc=report/exec_report',
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => '',
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 0,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => 'POST',
+        CURLOPT_POSTFIELDS => 'params={"reportResourceId":16798032,"reportTemplateId":43,"reportTemplate":null,"reportObjectId":16798032,"reportObjectSecId":"2","interval":{"flags":16777216,"from":'.$from.',"to":'.$to.'}}&sid='.$this->eid,
+        CURLOPT_HTTPHEADER => array(
+            'accept: */*',
+            'accept-language: en-GB,en-US;q=0.9,en;q=0.8',
+            'content-type: application/x-www-form-urlencoded',
+            'dnt: 1',
+            'origin: https://hst-api.wialon.com',
+            'priority: u=1, i',
+            'referer: https://hst-api.wialon.com/wialon/post.html',
+            'sec-ch-ua: "Not)A;Brand";v="99", "Google Chrome";v="127", "Chromium";v="127"',
+            'sec-ch-ua-mobile: ?0',
+            'sec-ch-ua-platform: "Windows"',
+            'sec-fetch-dest: empty',
+            'sec-fetch-mode: cors',
+            'sec-fetch-site: same-origin',
+            'user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36'
+        ),
+        ));
+
+        $response = curl_exec($curl);
+        curl_close($curl);
+        $responseDecoded = json_decode($response);    
+        $rows = 0;
+        isset($responseDecoded->reportResult->tables[0]->rows)? $rows = $responseDecoded->reportResult->tables[0]->rows : 0 ;
+        if($rows!=0){
+            $dataFinal = [];
+            for($i=0; $i<$rows; $i++){
+                $records = $this->reportGetRecords($i);
+                $records = json_decode($records,1);
+                $sI = 0;
+                foreach($records as $record){
+                    $data[$sI]['date'] = $record['c'][1] ?? null;
+                    $data[$sI]['plant'] = $record['c'][3] ?? null;
+                    array_push( $dataFinal, $data[$sI]);
+                    $sI++;
+                }
+            }
+            foreach($dataFinal as $dataFinalRow){
+                $exists = ReportThree::where('plant',$dataFinalRow['plant'])->first();
+                if(empty($exists)){
+                    ReportThree::create([
+                        'date' => $dataFinalRow['date'],
+                        'plant'=> $dataFinalRow['plant'],
+                    ]);
+                }
+            }
+            return response()->json([
+                    'data'   => ReportThree::get(),
+                    'status' => 200,
+                    'code'   => 1
+            ]);
+        }   
+        else{
+            return response()->json([
+                    'data'    => '',
+                    'status'  => 200,
+                    'code'    => 0
             ]);
         }
     }
