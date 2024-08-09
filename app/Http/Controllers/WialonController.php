@@ -372,6 +372,7 @@ class WialonController extends Controller
                 $this->getReportTwoPumpCarPlantTimes($from,$to);
                 $this->getReportTwoPumpCarSiteInTimes($from,$to);
                 $this->reportTwoFilterData();
+                return response()->json(['data'=>ReportTwo::get()]);
                 // $this->getReportTwoFirstTruckIn($from,$to);
             }
             else{
@@ -384,6 +385,29 @@ class WialonController extends Controller
             ]);
         }
     }
+
+    // Report Three
+    public function getReportThree(Request $request)
+    {
+        try {
+            $data = $request->all();
+            $from = Carbon::parse($data['from'])->timestamp;
+            $to   = Carbon::parse($data['to'])->timestamp;
+            if($to>$from){
+                DB::table('report_three')->truncate();
+                $this->getReportThreePlants($from,$to);
+            }
+            else{
+                return response()->json(['message'=>'Please enter a valid date range']);    
+            }
+        } catch (Exception $th) {
+            return response()->json([
+                'message' => $th->getMessage(),
+                'line' => $th->getLine()
+            ]);
+        }
+    }
+
 
     public function getReportTwoPumpCarPlantTimes($from,$to)
     {

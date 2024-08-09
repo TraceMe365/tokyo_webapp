@@ -91,7 +91,40 @@
             </table>
             </div>
         </div>
-        <div class="tab-pane container fade" id="menu1">...</div>
+        <div class="tab-pane container fade" id="menu1">
+                <div class="row mt-5 mb-3">
+                    <div class="col">
+                        From:
+                        <input type="datetime-local" name="fromReportTwo" id="fromReportTwo">
+                    </div>
+                    <div class="col">
+                        To:
+                        <input type="datetime-local" name="toReportTwo" id="toReportTwo">
+                    </div>
+                    <div class="col">
+                        <button class="btn btn-danger" id="generateReportTwo">Generate</button>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                <table id="reportTwoTable" class="table table-striped mt-3">
+                    <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Truck</th>
+                        <th>Plant</th>
+                        <th>Site</th>
+                        <th>Plant Out Time</th>
+                        <th>Site In Time</th>
+                        <th>Pump Idle Time</th>
+                        <th>First Truck In Time</th>
+                    </tr>
+                    </thead>
+                    <tbody id="reportTwoTableBody">
+
+                    </tbody>
+                </table>
+                </div>
+        </div>
         <div class="tab-pane container fade" id="menu2">...</div>
         </div>
    </div>
@@ -140,6 +173,58 @@
                         <td>${row['tokyo_site_in_time']!=null?row['tokyo_site_in_time']:"N/A"}</td>
                         <td>${row['tokyo_site_out_time']!=null?row['tokyo_site_out_time']:"N/A"}</td>
                         <td>${row['tokyo_site_out_plan_in_duration']!=null?row['tokyo_site_out_plan_in_duration']:"N/A"}</td>
+                        </tr>`);    
+                    })
+                }
+            });
+            if (!$.fn.DataTable.isDataTable('#reportOneTable')) {
+                $("#reportOneTable").DataTable({
+                    dom: 'Bfrtip',
+                    buttons: [
+                        'copy', 'csv', 'excel', 'pdf', 'print'
+                    ]
+                });
+            }
+            $("#loader").css("display","none")
+        })
+
+        $("#generateReportTwo").on('click',async function(){
+            $("#loader").css("display","flex")
+            var from = $("#fromReportTwo").val();
+            var to   = $("#toReportTwo").val();
+
+            var form = new FormData();
+            
+            form.append("from", from);
+            form.append("to", to);
+            
+            var settings = {
+                "url": "http://localhost:8000/api/getReportTwo",
+                "method": "POST",
+                "timeout": 0,
+                "processData": false,
+                "mimeType": "multipart/form-data",
+                "contentType": false,
+                "data": form
+            };
+
+            await $.ajax(settings).done(function (response) {
+                let data = JSON.parse(response);
+                console.log(data);
+                if(data.data){
+                    $("#reportTwoTableBody").html("");
+                    (data.data).forEach(function(row,index){
+                        var date = new Date(row['tokyo_plant_out_time']);
+                        var formattedDate = date.toISOString().split('T')[0];
+                        $("#reportTwoTableBody").append(`<tr>
+                        <td>${formattedDate}</td>
+                        <td>${row['tokyo_pump_car_name']}</td>
+                        <td>${row['tokyo_location_name']}</td>
+                        <td>${row['tokyo_site_name']!=null?row['tokyo_site_name']:"N/A"}</td>
+                        <td>${row['tokyo_plant_out_time']}</td>
+                        <td>${row['tokyo_site_in_time']}</td>
+                        <td>N/A</td>
+                        <td>N/A</td>
                         </tr>`);    
                     })
                 }
