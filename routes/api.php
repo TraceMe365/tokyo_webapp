@@ -30,4 +30,6 @@ Route::controller(WialonController::class)->group(function () {
     Route::get('/getPlants', 'getPlants');
     Route::post('/getReportTwo', 'getReportTwo');
     Route::post('/getReportThree', 'getReportThree');
+    Route::get('/getReportTwoLocationIds', 'getReportTwoLocationIds');
+    Route::get('/getReportTwoFirstTruckInTime', 'getReportTwoFirstTruckInTime');
 });

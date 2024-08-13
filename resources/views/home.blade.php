@@ -113,13 +113,14 @@
                     <thead>
                     <tr>
                         <th>Date</th>
-                        <th>Truck</th>
+                        <th>Pump Car</th>
                         <th>Plant</th>
                         <th>Site</th>
                         <th>Plant Out Time</th>
                         <th>Site In Time</th>
                         <th>Pump Idle Time</th>
                         <th>First Truck In Time</th>
+                        <th>Truck</th>
                     </tr>
                     </thead>
                     <tbody id="reportTwoTableBody">
@@ -264,6 +265,7 @@
                         <td>${row['tokyo_site_name']!=null?row['tokyo_site_name']:"N/A"}</td>
                         <td>${row['tokyo_plant_out_time']}</td>
                         <td>${row['tokyo_site_in_time']}</td>
+                        <td>N/A</td>
                         <td>N/A</td>
                         <td>N/A</td>
                         </tr>`);    

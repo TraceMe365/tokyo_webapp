@@ -377,8 +377,9 @@ class WialonController extends Controller
                 $this->getReportTwoPumpCarPlantTimes($from,$to);
                 $this->getReportTwoPumpCarSiteInTimes($from,$to);
                 $this->reportTwoFilterData();
+                $this->getReportTwoLocationIds();
+                // $this->getReportTwoFirstTruckInTime();
                 return response()->json(['data'=>ReportTwo::get()]);
-                // $this->getReportTwoFirstTruckIn($from,$to);
             }
             else{
                 return response()->json(['message'=>'Please enter a valid date range']);    
@@ -633,6 +634,20 @@ class WialonController extends Controller
         }
     }
 
+    public function getReportTwoLocationIds()
+    {
+        $locations = $this->getAllLocations();
+        $report = ReportTwo::get();
+        foreach($report as $record){
+            foreach($locations as $location){
+                if($location['name']==$record['tokyo_site_name']){
+                    $record->tokyo_pump_site_id = $location['id'];
+                    $record->save();
+                }
+            }
+        }
+    }
+
     public function reportTwoFilterData() : JsonResponse
     {
         $data = ReportTwo::get();
@@ -724,4 +739,6 @@ class WialonController extends Controller
             }
         }
     }
+
+    
 }
