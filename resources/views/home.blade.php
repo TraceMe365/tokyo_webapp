@@ -265,9 +265,9 @@
                         <td>${row['tokyo_site_name']!=null?row['tokyo_site_name']:"N/A"}</td>
                         <td>${row['tokyo_plant_out_time']}</td>
                         <td>${row['tokyo_site_in_time']}</td>
-                        <td>N/A</td>
-                        <td>N/A</td>
-                        <td>N/A</td>
+                        <td>${row['tokyo_pump_idle_time']!=null?row['tokyo_pump_idle_time']:"N/A"}</td>
+                        <td>${row['tokyo_first_truck_in_time']!=null?row['tokyo_first_truck_in_time']:"N/A"}</td>
+                        <td>${row['tokyo_first_truck_in_name']!=null?row['tokyo_first_truck_in_name']:"N/A"}</td>
                         </tr>`);    
                     })
                 }
