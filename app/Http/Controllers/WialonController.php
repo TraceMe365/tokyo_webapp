@@ -378,7 +378,7 @@ class WialonController extends Controller
                 $this->getReportTwoPumpCarSiteInTimes($from,$to);
                 $this->reportTwoFilterData();
                 $this->getReportTwoLocationIds();
-                // $this->getReportTwoFirstTruckInTime();
+                $this->getReportTwoFirstTruckInTime();
                 return response()->json(['data'=>ReportTwo::get()]);
             }
             else{
@@ -740,5 +740,99 @@ class WialonController extends Controller
         }
     }
 
+    public function getReportTwoFirstTruckInTime()
+    {
+        $report = ReportTwo::get();
+        $this->getSessionEID();
+        $this->setTimeZone();
+        foreach($report as $record){
+
+            $from            = $record->tokyo_site_in_time;
+            $fromUnix        = Carbon::parse($record->tokyo_site_in_time,'GMT+5:30')->timestamp;
+            $to              = Carbon::parse($from)->addHours(6);
+            $toUnix          = strtotime($to);
+            $result          = $this->getReportTwoTruckTimesFromAPI($record->tokyo_pump_site_id,$fromUnix,$toUnix);
+            $responseDecoded = json_decode($result);
+
+            if(isset($responseDecoded->reportResult)){
+                if(!empty($responseDecoded->reportResult->tables)){
+                    isset($responseDecoded->reportResult->tables[0]->rows)? $rows = $responseDecoded->reportResult->tables[0]->rows : 0 ;
+                    if($rows>0){
+                        $reportResult = $this->reportGetAllRecords();
+                        $reportResult = json_decode($reportResult,true);
+                        foreach($reportResult as $reportRow){
+                            if(isset($reportRow['c'][2]['t'])){
+                                $time = $reportRow['c'][2]['t'];
+                                $timeParsed = Carbon::parse($time);
+                                $fromTimePumpCar = Carbon::parse($record->tokyo_site_in_time);
+                                if($timeParsed->greaterThan($fromTimePumpCar)){
+                                    $record->tokyo_first_truck_in_name = $reportRow['c'][1];
+                                    $record->tokyo_first_truck_in_time = $time;
+                                    // Idle Time
+                                    $diffInSeconds = $timeParsed->diffInSeconds($fromTimePumpCar);
+                                    $diffDateTime = Carbon::createFromTimestampUTC($diffInSeconds)->format('H:i:s');
+                                    $record->tokyo_pump_idle_time = $diffDateTime;
+                                    $record->save();
+                                    break;
+                                } 
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public function reportGetAllRecords()
+    {
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+        CURLOPT_URL => 'https://hst-api.wialon.com/wialon/ajax.html?svc=report/select_result_rows&sid='.$this->eid.'&params={"tableIndex":0,"config":{"type":"range","data":{"from":0,"to":19,"level":0,"unitInfo":1}}}',
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => '',
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 0,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => 'POST',
+        ));
+        $response = curl_exec($curl);
+        curl_close($curl);
+        return $response;
+    }
+
+    public function getReportTwoTruckTimesFromAPI($geofence,$from,$to)
+    {
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+        CURLOPT_URL => 'https://hst-api.wialon.com/wialon/ajax.html?svc=report/exec_report&params={"reportResourceId":16798032,"reportTemplateId":46,"reportTemplate":null,"reportObjectId":16798032,"reportObjectSecId":"'.$geofence.'","interval":{"flags":16777216,"from":'.$from.',"to":'.$to.'}}&sid='.$this->eid,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => '',
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 0,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => 'POST',
+        ));
+        $response = curl_exec($curl);
+        curl_close($curl);
+        return $response;
+    }
     
+    public function setTimeZone()
+    {
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+        CURLOPT_URL => 'https://hst-api.wialon.com/wialon/ajax.html?svc=render%2Fset_locale&params={%22tzOffset%22%3A19800%2C%22language%22%3A%22en%22}&sid='.$this->eid,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => '',
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 0,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => 'POST',
+        ));
+        $response = curl_exec($curl);
+        curl_close($curl);
+    }
 }
