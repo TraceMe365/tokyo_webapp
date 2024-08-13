@@ -176,7 +176,9 @@
         $("#generateReportOne").on('click',async function(){
             $("#loader").css("display","flex")
             var from = $("#fromReportOne").val();
+                from = convertToUnix(from);
             var to   = $("#toReportOne").val();
+                to = convertToUnix(to);
 
             var form = new FormData();
             
@@ -228,7 +230,9 @@
         $("#generateReportTwo").on('click',async function(){
             $("#loader").css("display","flex")
             var from = $("#fromReportTwo").val();
+                from = convertToUnix(from);
             var to   = $("#toReportTwo").val();
+                to = convertToUnix(to);
 
             var form = new FormData();
             
@@ -280,7 +284,9 @@
         $("#generateReportThree").on('click',async function(){
             $("#loader").css("display","flex")
             var from = $("#fromReportThree").val();
+                from = convertToUnix(from);
             var to   = $("#toReportThree").val();
+                to = convertToUnix(to);
 
             var form = new FormData();
             
@@ -333,7 +339,11 @@
             $("#loader").css("display","none")
             
         })
-    
+        
+        function convertToUnix(dateStr){
+            const date = new Date(dateStr);
+            return unixTimestamp = Math.floor(date.getTime() / 1000);
+        }
     });
 </script>
 </html>

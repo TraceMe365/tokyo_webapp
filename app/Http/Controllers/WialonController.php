@@ -165,8 +165,10 @@ class WialonController extends Controller
     {   
         try {
             $data = $request->all();
-            $from = Carbon::parse($data['from'])->timestamp;
-            $to   = Carbon::parse($data['to'])->timestamp;
+            // $from = Carbon::parse($data['from'])->timestamp;
+            // $to   = Carbon::parse($data['to'])->timestamp;
+            $from = $data['from'];
+            $to   = $data['to'];
             // Get plant and vehicle details for duration
             if($to>$from){
                 DB::table('report_one')->truncate();
@@ -366,8 +368,10 @@ class WialonController extends Controller
     {
         try {
             $data = $request->all();
-            $from = Carbon::parse($data['from'])->timestamp;
-            $to   = Carbon::parse($data['to'])->timestamp;
+            // $from = Carbon::parse($data['from'])->timestamp;
+            // $to   = Carbon::parse($data['to'])->timestamp;
+            $from = $data['from'];
+            $to   = $data['to'];
             if($to>$from){
                 DB::table('report_two')->truncate();
                 $this->getReportTwoPumpCarPlantTimes($from,$to);
@@ -392,8 +396,10 @@ class WialonController extends Controller
     {
         try {
             $data = $request->all();
-            $from = Carbon::parse($data['from'])->timestamp;
-            $to   = Carbon::parse($data['to'])->timestamp;
+            // $from = Carbon::parse($data['from'])->timestamp;
+            // $to   = Carbon::parse($data['to'])->timestamp;
+            $from = $data['from'];
+            $to   = $data['to'];
             if($to>$from){
                 DB::table('report_three')->truncate();
                 return $this->getReportThreePlants($from,$to);
