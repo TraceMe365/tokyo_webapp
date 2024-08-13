@@ -270,7 +270,7 @@
                     })
                 }
             });
-            if (!$.fn.DataTable.isDataTable('#reportTwoable')) {
+            if (!$.fn.DataTable.isDataTable('#reportTwoTable')) {
                 $("#reportTwoTable").DataTable({
                     dom: 'Bfrtip',
                     buttons: [
