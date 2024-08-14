@@ -217,14 +217,20 @@
                     })
                 }
             });
-            if (!$.fn.DataTable.isDataTable('#reportOneTable')) {
-                $("#reportOneTable").DataTable({
-                    dom: 'Bfrtip',
-                    buttons: [
-                        'copy', 'csv', 'excel', 'pdf', 'print'
-                    ]
-                });
-            }
+            // if (!$.fn.DataTable.isDataTable('#reportOneTable')) {
+            //     $("#reportOneTable").DataTable({
+            //         dom: 'Bfrtip',
+            //         buttons: [
+            //             'copy', 'csv', 'excel', 'pdf', 'print'
+            //         ]
+            //     });
+            // }
+            $("#reportOneTable").DataTable({
+                dom: 'Bfrtip',
+                buttons: [
+                    'copy', 'csv', 'excel', 'pdf', 'print'
+                ]
+            });
             $("#loader").css("display","none")
         })
 
@@ -272,14 +278,20 @@
                     })
                 }
             });
-            if (!$.fn.DataTable.isDataTable('#reportTwoTable')) {
-                $("#reportTwoTable").DataTable({
-                    dom: 'Bfrtip',
-                    buttons: [
-                        'copy', 'csv', 'excel', 'pdf', 'print'
-                    ]
-                });
-            }
+            // if (!$.fn.DataTable.isDataTable('#reportTwoTable')) {
+            //     $("#reportTwoTable").DataTable({
+            //         dom: 'Bfrtip',
+            //         buttons: [
+            //             'copy', 'csv', 'excel', 'pdf', 'print'
+            //         ]
+            //     });
+            // }
+            $("#reportTwoTable").DataTable({
+                dom: 'Bfrtip',
+                buttons: [
+                    'copy', 'csv', 'excel', 'pdf', 'print'
+                ]
+            });
             $("#loader").css("display","none")
         })
 
