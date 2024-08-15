@@ -174,6 +174,7 @@ class WialonController extends Controller
                 if($plant=='peliyagoda'){
                     $plants = ['Peliyagoda Yard','Tokyo SUERMIX Peliyagoda','Tokyo_Rathmalana Plant'];
                     DB::table('report_one')->truncate();
+                    ReportOne::truncate();
                     $result = $this->getPeliyagodaYardData($from,$to);
                     if(isset($result['reportResult']['tables'][0]['rows'])){
                         $rows = $result['reportResult']['tables'][0]['rows'] > 0 ? $result['reportResult']['tables'][0]['rows'] : 0;
@@ -220,13 +221,23 @@ class WialonController extends Controller
                                     'tokyo_site_out_plan_in_duration' => $dataFinalRow['tokyo_site_out_plan_in_duration'],
                                 ]);
                             }
-                            // Insert To Second Filtered Table
+                            // Further Filter
+                            $reportOneData = ReportOne::get()->toArray();
+                            for($i=0;$i<count($reportOneData)-1;$i+=2){
+                                $newRecord = [];
+                                if($reportOneData[$i]['tokyo_location_name'] == $reportOneData[$i+1]['tokyo_location_name']){
+                                    $id = $reportOneData[$i]['id'];
+                                    ReportOne::where('id', $id)->delete();
+                                }
+                            }
+                            // Get New Records
                             $reportOneData = ReportOne::get()->toArray();
                             ReportOneFiltered::truncate();
                             for($i=0;$i<count($reportOneData)-1;$i+=2){
                                 $newRecord = [];
                                 if(in_array($reportOneData[$i]['tokyo_location_name'],$plants)){
-                                    if($reportOneData[$i]['tokyo_vehicle_name'] == $reportOneData[$i+1]['tokyo_vehicle_name']){
+                                    if(($reportOneData[$i]['tokyo_location_name'] == $reportOneData[$i+1]['tokyo_site_name'])
+                                    && ($reportOneData[$i]['tokyo_site_name'] == $reportOneData[$i+1]['tokyo_location_name'])){
                                         // First Record
                                         $firstRecord                       = $reportOneData[$i];
                                         $newRecord['tokyo_vehicle_id']     = $firstRecord['tokyo_vehicle_id'];
