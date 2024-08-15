@@ -234,23 +234,18 @@
                     })
                 }
             });
-            // if (!$.fn.DataTable.isDataTable('#reportOneTable')) {
-            //     $("#reportOneTable").DataTable({
-            //         dom: 'Bfrtip',
-            //         buttons: [
-            //             'copy', 'csv', 'excel', 'pdf', 'print'
-            //         ]
-            //     });
-            // }
-            $("#reportOneTable").DataTable({
-                dom: 'Bfrtip',
-                buttons: [
-                    'copy', 'csv', 'excel', 'pdf', 'print',
-                ],
-                exportOptions: {
-                    title: null
-                }
-            });
+            if (!$.fn.DataTable.isDataTable('#reportOneTable')) {
+                $("#reportOneTable").DataTable({
+                    dom: 'Bfrtip',
+                    buttons: [
+                        'copy', 'csv', 'excel', 'pdf', 'print',
+                    ],
+                    exportOptions: {
+                        title: null
+                    }
+                });
+            }
+            
             $("#loader").css("display","none")
         })
 
