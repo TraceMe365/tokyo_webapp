@@ -100,6 +100,7 @@
                     <th>Plant In Time</th>
                     <th>Duration (Site Out Time - Plant Out Time) </th>
                     <th>Site Idle (Site Out Time - Site In Time) </th>
+                    <th>Duration from Plant to Site (Site In Time - Plant Out) </th>
                 </tr>
                 </thead>
                 <tbody id="reportOneTableBody">
@@ -222,15 +223,17 @@
                         var date = new Date(row['tokyo_plant_in_time']);
                         var formattedDate = date.toISOString().split('T')[0];
                         $("#reportOneTableBody").append(`<tr>
-                        <td>${formattedDate}</td>
-                        <td>${row['tokyo_vehicle_name']}</td>
-                        <td>${row['tokyo_location_name']}</td>
-                        <td>${row['tokyo_site_name']!=null?row['tokyo_site_name']:"N/A"}</td>
-                        <td>${row['tokyo_plant_in_time']}</td>
-                        <td>${row['tokyo_plant_out_time']}</td>
-                        <td>${row['tokyo_site_in_time']!=null?row['tokyo_site_in_time']:"N/A"}</td>
-                        <td>${row['tokyo_site_out_time']!=null?row['tokyo_site_out_time']:"N/A"}</td>
-                        <td>${row['tokyo_site_out_plan_in_duration']!=null?row['tokyo_site_out_plan_in_duration']:"N/A"}</td>
+                            <td>${formattedDate}</td>
+                            <td>${row['tokyo_vehicle_name']!=null?row['tokyo_vehicle_name']:"N/A"}</td>
+                            <td>${row['tokyo_location_name']!=null?row['tokyo_location_name']:"N/A"}</td>
+                            <td>${row['tokyo_site_name']!=null?row['tokyo_site_name']:"N/A"}</td>
+                            <td>${row['tokyo_plant_out_time']!=null?row['tokyo_plant_out_time']:"N/A"}</td>
+                            <td>${row['tokyo_site_in_time']!=null?row['tokyo_site_in_time']:"N/A"}</td>
+                            <td>${row['tokyo_site_out_time']!=null?row['tokyo_site_out_time']:"N/A"}</td>
+                            <td>${row['tokyo_plant_in_time']!=null?row['tokyo_plant_in_time']:"N/A"}</td>
+                            <td>${row['tokyo_site_out_plan_in_duration']!=null?row['tokyo_site_out_plan_in_duration']:"N/A"}</td>
+                            <td>${row['tokyo_site_duration']!=null?row['tokyo_site_duration']:"N/A"}</td>
+                            <td>${row['tokyo_site_plant_out_site_in_duration']!=null?row['tokyo_site_plant_out_site_in_duration']:"N/A"}</td>
                         </tr>`);    
                     })
                 }
