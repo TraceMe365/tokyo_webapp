@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ReportOne;
+use App\Models\ReportOneFiltered;
 use App\Models\ReportThree;
 use App\Models\ReportTwo;
 use Carbon\Carbon;
@@ -165,16 +166,111 @@ class WialonController extends Controller
     {   
         try {
             $data = $request->all();
-            // $from = Carbon::parse($data['from'])->timestamp;
-            // $to   = Carbon::parse($data['to'])->timestamp;
             $from = $data['from'];
             $to   = $data['to'];
+            $plant = isset($data['plant']) ? $data['plant'] : null;
             // Get plant and vehicle details for duration
-            if($to>$from){
-                DB::table('report_one')->truncate();
-                $this->reportOnePlantDurations($from,$to);
-                $this->reportOneSiteDurations($from,$to);
-                return response()->json(['data'=>ReportOne::get()]);    
+            if($to>$from && $plant!=null){
+                if($plant=='peliyagoda'){
+                    $plants = ['Peliyagoda Yard','Tokyo SUERMIX Peliyagoda'];
+                    DB::table('report_one')->truncate();
+                    $result = $this->getPeliyagodaYardData($from,$to);
+                    if(isset($result['reportResult']['tables'][0]['rows'])){
+                        $rows = $result['reportResult']['tables'][0]['rows'] > 0 ? $result['reportResult']['tables'][0]['rows'] : 0;
+                        if($rows>0){
+                            $dataFinal = [];
+                            for($i=0; $i<$rows; $i++){
+                                $records = $this->reportGetRecords($i);
+                                $records = json_decode($records,1);
+                                $sI = 0;
+                                foreach($records as $record){
+                                    // Filter to only insert Mixer Truck records
+                                    if(strpos($record['c'][1],'MT')!==false){
+                                        // Filter plant to plant records
+                                        if((in_array($record['c'][2], $plants) && !in_array($record['c'][4], $plants)) || 
+                                        (!in_array($record['c'][2], $plants) && in_array($record['c'][4], $plants))){    
+                                            $data[$sI]['tokyo_vehicle_id']                = $record['uid'] ?? null;
+                                            $data[$sI]['tokyo_vehicle_name']              = $record['c'][1] ?? null;
+                                            $data[$sI]['tokyo_location_name']             = $record['c'][2] ?? null;
+                                            $data[$sI]['tokyo_plant_in_time']             = null;
+                                            $data[$sI]['tokyo_plant_out_time']            = $record['c'][3]['t'] ?? null;
+                                            $data[$sI]['tokyo_plant_duration']            = null;
+                                            $data[$sI]['tokyo_site_name']                 = $record['c'][4] ?? null;
+                                            $data[$sI]['tokyo_site_in_time']              = $record['c'][5]['t'] ?? null;
+                                            $data[$sI]['tokyo_site_out_time']             = null;
+                                            $data[$sI]['tokyo_site_duration']             = null;
+                                            $data[$sI]['tokyo_site_out_plan_in_duration'] = null;
+                                            array_push($dataFinal, $data[$sI]);
+                                            $sI++;
+                                        }
+                                    }
+                                }
+                            }                     
+                            foreach($dataFinal as $dataFinalRow){
+                                ReportOne::create([
+                                    'tokyo_vehicle_id'                => $dataFinalRow['tokyo_vehicle_id'],
+                                    'tokyo_vehicle_name'              => $dataFinalRow['tokyo_vehicle_name'],
+                                    'tokyo_location_name'             => $dataFinalRow['tokyo_location_name'],
+                                    'tokyo_plant_in_time'             => $dataFinalRow['tokyo_plant_in_time'],
+                                    'tokyo_plant_out_time'            => $dataFinalRow['tokyo_plant_out_time'],
+                                    'tokyo_site_name'                 => $dataFinalRow['tokyo_site_name'],
+                                    'tokyo_site_in_time'              => $dataFinalRow['tokyo_site_in_time'],
+                                    'tokyo_site_out_time'             => $dataFinalRow['tokyo_site_out_time'],
+                                    'tokyo_site_duration'             => $dataFinalRow['tokyo_site_duration'],
+                                    'tokyo_site_out_plan_in_duration' => $dataFinalRow['tokyo_site_out_plan_in_duration'],
+                                ]);
+                            }
+                            // Insert To Second Filtered Table
+                            $reportOneData = ReportOne::get()->toArray();
+                            ReportOneFiltered::truncate();
+                            for($i=0;$i<count($reportOneData)-1;$i+=2){
+                                $newRecord = [];
+                                if(in_array($reportOneData[$i]['tokyo_location_name'],$plants)){
+                                    // First Record
+                                    $firstRecord                       = $reportOneData[$i];
+                                    $newRecord['tokyo_vehicle_id']     = $firstRecord['tokyo_vehicle_id'];
+                                    $newRecord['tokyo_vehicle_name']   = $firstRecord['tokyo_vehicle_name'];
+                                    $newRecord['tokyo_location_name']  = $firstRecord['tokyo_location_name'];
+                                    $newRecord['tokyo_plant_out_time'] = $firstRecord['tokyo_plant_out_time'];
+                                    $newRecord['tokyo_site_name']      = $firstRecord['tokyo_site_name'];
+                                    $newRecord['tokyo_site_in_time']   = $firstRecord['tokyo_site_in_time'];
+                                    
+                                    // Second Record 
+                                    $secondRecord = $reportOneData[$i+1];
+                                    $newRecord['tokyo_plant_in_time']  = $secondRecord['tokyo_site_in_time'];
+                                    $newRecord['tokyo_site_out_time']  = $secondRecord['tokyo_plant_out_time'];
+                                    
+                                    // Site Idle Time
+                                    $site_in = $firstRecord['tokyo_site_in_time'];
+                                    $site_out =$secondRecord['tokyo_plant_out_time'];
+                                    $newRecord['tokyo_site_duration'] = $this->getTimeDifference($site_out,$site_in);
+                                    
+                                    // Site Out Plant In
+                                    $plant_in_2 = $secondRecord['tokyo_site_in_time'];
+                                    $site_out_2 = $secondRecord['tokyo_plant_out_time'];
+                                    $newRecord['tokyo_site_out_plan_in_duration']  = $this->getTimeDifference($plant_in_2,$site_out_2);
+
+                                    // Plant In Site Out
+                                    $plant_out = $firstRecord['tokyo_plant_out_time'];
+                                    $site_in = $firstRecord['tokyo_site_in_time'];
+                                    $newRecord['tokyo_site_plant_out_site_in_duration'] = $this->getTimeDifference($site_in,$plant_out);
+
+                                    ReportOneFiltered::create($newRecord);
+                                }
+                            }
+                            $data = ReportOneFiltered::get();
+                            return response()->json([
+                                    'data'   => $data,
+                                    'status' => 200,
+                                    'code'   => 1
+                            ]);
+                        }
+                    }
+                }
+                else if($plant=='kandy'){
+
+                }
+                
             }
             else{
                 return response()->json(['message'=>'Please enter a valid date range']);    
@@ -183,6 +279,19 @@ class WialonController extends Controller
             return response()->json(['Error'=>$e->getMessage(),"Line"=>$e->getLine()]);
         }
         
+    }
+
+    public function getTimeDifference($time1,$time2){
+        $time1 = Carbon::parse($time1);
+        $time2 = Carbon::parse($time2);
+
+        $diffInSeconds = $time1->diffInSeconds($time2);
+        $hours = floor($diffInSeconds / 3600);
+        $minutes = floor(($diffInSeconds % 3600) / 60);
+        $seconds = $diffInSeconds % 60;
+
+        $timeDiff = sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
+        return $timeDiff;
     }
 
     public function reportOnePlantDurations($from,$to)
@@ -834,5 +943,26 @@ class WialonController extends Controller
         ));
         $response = curl_exec($curl);
         curl_close($curl);
+    }
+
+    public function getPeliyagodaYardData($from,$to)
+    {
+        $this->getSessionEID();
+        $this->setTimeZone();
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+        CURLOPT_URL => 'https://hst-api.wialon.com/wialon/ajax.html?svc=report/exec_report&params={"reportResourceId":16798032,"reportTemplateId":50,"reportTemplate":null,"reportObjectId":16798326,"reportObjectSecId":0,"interval":{"flags":16777216,"from":'.$from.',"to":'.$to.'},"reportObjectIdList":[]}&sid='.$this->eid,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => '',
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 0,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => 'POST',
+        ));
+        $response = curl_exec($curl);
+        curl_close($curl);
+        $result = json_decode($response,true);
+        return $result;
     }
 }

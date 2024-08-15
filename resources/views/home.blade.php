@@ -67,6 +67,22 @@
                         <input type="datetime-local" name="toReportOne" id="toReportOne">
                     </div>
                     <div class="col">
+                        Plant:
+                        <select class="select" id="reportOnePlant">
+                            <option value="peliyagoda">Peliyagoda Plant</option>
+                            <option value="kandy">Kandy Plant</option>
+                            <option value="trinco">Trinco Plant</option>
+                            <option value="anuradhapura">Anuradhapura Plant</option>
+                            <option value="negombo">Negombo Plant</option>
+                            <option value="ankanda">Ankanda Plant</option>
+                            <option value="mahiyangana">Mahiyangana Plant</option>
+                            <option value="meethotamulla">Meethotamulla Plant</option>
+                            <option value="waligama">Waligama Plant</option>
+                            <option value="jaffna">Jaffna Plant</option>
+                            <option value="rathmalana">Rathmalana Plant</option>
+                        </select>
+                    </div>
+                    <div class="col">
                         <button class="btn btn-danger" id="generateReportOne">Generate</button>
                     </div>
             </div>
@@ -78,11 +94,12 @@
                     <th>Truck</th>
                     <th>Plant</th>
                     <th>Site</th>
-                    <th>Plant In Time</th>
                     <th>Plant Out Time</th>
                     <th>Site In Time</th>
                     <th>Site Out Time</th>
-                    <th>Duration</th>
+                    <th>Plant In Time</th>
+                    <th>Duration (Site Out Time - Plant Out Time) </th>
+                    <th>Site Idle (Site Out Time - Site In Time) </th>
                 </tr>
                 </thead>
                 <tbody id="reportOneTableBody">
@@ -180,11 +197,12 @@
                 from = convertToUnix(from);
             var to   = $("#toReportOne").val();
                 to = convertToUnix(to);
-
+            var plant = $("#reportOnePlant").val();
             var form = new FormData();
             
             form.append("from", from);
             form.append("to", to);
+            form.append("plant", plant);
             
             var settings = {
                 "url": "http://localhost:8000/api/getReportOne",
