@@ -286,7 +286,118 @@ class WialonController extends Controller
                     }
                 }
                 else if($plant=='kandy'){
+                    $plants = ['Tokyo Kandy Plant','Tokyo SUPERMIX, Kandy'];
+                    DB::table('report_one')->truncate();
+                    ReportOne::truncate();
+                    $result = $this->getKandyPlantData($from,$to);
+                    if(isset($result['reportResult']['tables'][0]['rows'])){
+                        $rows = $result['reportResult']['tables'][0]['rows'] > 0 ? $result['reportResult']['tables'][0]['rows'] : 0;
+                        if($rows>0){
+                            $dataFinal = [];
+                            for($i=0; $i<$rows; $i++){
+                                $records = $this->reportGetRecords($i);
+                                $records = json_decode($records,1);
+                                $sI = 0;
+                                foreach($records as $record){
+                                    // Filter to only insert Mixer Truck records
+                                    if(strpos($record['c'][1],'MT')!==false){
+                                        // Filter plant to plant records
+                                        if((in_array($record['c'][2], $plants) && !in_array($record['c'][4], $plants)) || 
+                                        (!in_array($record['c'][2], $plants) && in_array($record['c'][4], $plants))){    
+                                            $data[$sI]['tokyo_vehicle_id']                = $record['uid'] ?? null;
+                                            $data[$sI]['tokyo_vehicle_name']              = $record['c'][1] ?? null;
+                                            $data[$sI]['tokyo_location_name']             = $record['c'][2] ?? null;
+                                            $data[$sI]['tokyo_plant_in_time']             = null;
+                                            $data[$sI]['tokyo_plant_out_time']            = $record['c'][3]['t'] ?? null;
+                                            $data[$sI]['tokyo_plant_duration']            = null;
+                                            $data[$sI]['tokyo_site_name']                 = $record['c'][4] ?? null;
+                                            $data[$sI]['tokyo_site_in_time']              = $record['c'][5]['t'] ?? null;
+                                            $data[$sI]['tokyo_site_out_time']             = null;
+                                            $data[$sI]['tokyo_site_duration']             = null;
+                                            $data[$sI]['tokyo_site_out_plan_in_duration'] = null;
+                                            array_push($dataFinal, $data[$sI]);
+                                            $sI++;
+                                        }
+                                    }
+                                }
+                            }                     
+                            foreach($dataFinal as $dataFinalRow){
+                                ReportOne::create([
+                                    'tokyo_vehicle_id'                => $dataFinalRow['tokyo_vehicle_id'],
+                                    'tokyo_vehicle_name'              => $dataFinalRow['tokyo_vehicle_name'],
+                                    'tokyo_location_name'             => $dataFinalRow['tokyo_location_name'],
+                                    'tokyo_plant_in_time'             => $dataFinalRow['tokyo_plant_in_time'],
+                                    'tokyo_plant_out_time'            => $dataFinalRow['tokyo_plant_out_time'],
+                                    'tokyo_site_name'                 => $dataFinalRow['tokyo_site_name'],
+                                    'tokyo_site_in_time'              => $dataFinalRow['tokyo_site_in_time'],
+                                    'tokyo_site_out_time'             => $dataFinalRow['tokyo_site_out_time'],
+                                    'tokyo_site_duration'             => $dataFinalRow['tokyo_site_duration'],
+                                    'tokyo_site_out_plan_in_duration' => $dataFinalRow['tokyo_site_out_plan_in_duration'],
+                                ]);
+                            }
+                            // Further Filter
+                            $reportOneData = ReportOne::get()->toArray();
+                            for($i=0;$i<count($reportOneData)-1;$i+=2){
+                                $newRecord = [];
+                                if($reportOneData[$i]['tokyo_location_name'] == $reportOneData[$i+1]['tokyo_location_name']){
+                                    $id = $reportOneData[$i]['id'];
+                                    ReportOne::where('id', $id)->delete();
+                                }
+                            }
+                            // Get New Records
+                            $reportOneData = ReportOne::get()->toArray();
+                            ReportOneFiltered::truncate();
+                            for($i=0;$i<count($reportOneData)-1;$i+=2){
+                                $newRecord = [];
+                                if(in_array($reportOneData[$i]['tokyo_location_name'],$plants)){
+                                    if(($reportOneData[$i]['tokyo_location_name'] == $reportOneData[$i+1]['tokyo_site_name'])
+                                    && ($reportOneData[$i]['tokyo_site_name'] == $reportOneData[$i+1]['tokyo_location_name'])){
+                                        // First Record
+                                        $firstRecord                       = $reportOneData[$i];
+                                        $newRecord['tokyo_vehicle_id']     = $firstRecord['tokyo_vehicle_id'];
+                                        $newRecord['tokyo_vehicle_name']   = $firstRecord['tokyo_vehicle_name'];
+                                        $newRecord['tokyo_location_name']  = $firstRecord['tokyo_location_name'];
+                                        $newRecord['tokyo_plant_out_time'] = $firstRecord['tokyo_plant_out_time'];
+                                        $newRecord['tokyo_site_name']      = $firstRecord['tokyo_site_name'];
+                                        $newRecord['tokyo_site_in_time']   = $firstRecord['tokyo_site_in_time'];
+                                        
+                                        // Second Record 
+                                        $secondRecord = $reportOneData[$i+1];
+                                        $newRecord['tokyo_plant_in_time']  = $secondRecord['tokyo_site_in_time'];
+                                        $newRecord['tokyo_site_out_time']  = $secondRecord['tokyo_plant_out_time'];
+                                        
+                                        // Site Idle Time
+                                        $site_in = $firstRecord['tokyo_site_in_time'];
+                                        $site_out =$secondRecord['tokyo_plant_out_time'];
+                                        $newRecord['tokyo_site_duration'] = $this->getTimeDifference($site_out,$site_in);
+                                        
+                                        // Site Out Plant In
+                                        $plant_in_2 = $secondRecord['tokyo_site_in_time'];
+                                        $site_out_2 = $firstRecord['tokyo_plant_out_time'];
+                                        $newRecord['tokyo_site_out_plan_in_duration']  = $this->getTimeDifference($plant_in_2,$site_out_2);
 
+                                        // Plant In Site Out
+                                        $plant_out = $firstRecord['tokyo_plant_out_time'];
+                                        $site_in = $firstRecord['tokyo_site_in_time'];
+                                        $newRecord['tokyo_site_plant_out_site_in_duration'] = $this->getTimeDifference($site_in,$plant_out);
+
+                                        // Plant Out Site Out (Real Idling Time)
+                                        $plant_out = $firstRecord['tokyo_plant_out_time'];
+                                        $site_out_2 = $secondRecord['tokyo_plant_out_time'];
+                                        $newRecord['tokyo_site_out_plan_out_duration'] = $this->getTimeDifference($site_out_2,$plant_out);
+
+                                        ReportOneFiltered::create($newRecord);
+                                    }
+                                }
+                            }
+                            $data = ReportOneFiltered::get();
+                            return response()->json([
+                                    'data'   => $data,
+                                    'status' => 200,
+                                    'code'   => 1
+                            ]);
+                        }
+                    }
                 }
                 
             }
@@ -970,6 +1081,27 @@ class WialonController extends Controller
         $curl = curl_init();
         curl_setopt_array($curl, array(
         CURLOPT_URL => 'https://hst-api.wialon.com/wialon/ajax.html?svc=report/exec_report&params={"reportResourceId":16798032,"reportTemplateId":50,"reportTemplate":null,"reportObjectId":16798326,"reportObjectSecId":0,"interval":{"flags":16777216,"from":'.$from.',"to":'.$to.'},"reportObjectIdList":[]}&sid='.$this->eid,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => '',
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 0,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => 'POST',
+        ));
+        $response = curl_exec($curl);
+        curl_close($curl);
+        $result = json_decode($response,true);
+        return $result;
+    }
+
+    public function getKandyPlantData($from,$to)
+    {
+        $this->getSessionEID();
+        $this->setTimeZone();
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+        CURLOPT_URL => 'https://hst-api.wialon.com/wialon/ajax.html?svc=report/exec_report&params={"reportResourceId":16798032,"reportTemplateId":51,"reportTemplate":null,"reportObjectId":17739115,"reportObjectSecId":0,"interval":{"flags":16777216,"from":'.$from.',"to":'.$to.'},"reportObjectIdList":[]}&sid='.$this->eid,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_ENCODING => '',
         CURLOPT_MAXREDIRS => 10,
