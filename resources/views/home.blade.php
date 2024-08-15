@@ -241,7 +241,7 @@
                 $('#reportOneTable').DataTable().clear().destroy();
             }
 
-             $("#reportOneTable").DataTable({
+            $("#reportOneTable").DataTable({
                 dom: 'Bfrtip',
                 buttons: [
                     'copy', 'csv', 'excel', 'pdf', 'print',
@@ -287,7 +287,7 @@
                 "contentType": false,
                 "data": form
             };
-
+            var tableData = [];
             await $.ajax(settings).done(function (response) {
                 let data = JSON.parse(response);
                 console.log(data);
@@ -296,32 +296,44 @@
                     (data.data).forEach(function(row,index){
                         var date = new Date(row['tokyo_plant_out_time']);
                         var formattedDate = date.toISOString().split('T')[0];
-                        $("#reportTwoTableBody").append(`<tr>
-                        <td>${formattedDate}</td>
-                        <td>${row['tokyo_pump_car_name']}</td>
-                        <td>${row['tokyo_location_name']}</td>
-                        <td>${row['tokyo_site_name']!=null?row['tokyo_site_name']:"N/A"}</td>
-                        <td>${row['tokyo_plant_out_time']}</td>
-                        <td>${row['tokyo_site_in_time']}</td>
-                        <td>${row['tokyo_pump_idle_time']!=null?row['tokyo_pump_idle_time']:"N/A"}</td>
-                        <td>${row['tokyo_first_truck_in_time']!=null?row['tokyo_first_truck_in_time']:"N/A"}</td>
-                        <td>${row['tokyo_first_truck_in_name']!=null?row['tokyo_first_truck_in_name']:"N/A"}</td>
-                        </tr>`);    
+                        tableData.push([
+                            formattedDate,
+                            row['tokyo_pump_car_name'],
+                            row['tokyo_location_name'],
+                            row['tokyo_site_name']!=null?row['tokyo_site_name']:"N/A",
+                            row['tokyo_plant_out_time'],
+                            row['tokyo_site_in_time'],
+                            row['tokyo_pump_idle_time']!=null?row['tokyo_pump_idle_time']:"N/A",
+                            row['tokyo_first_truck_in_time']!=null?row['tokyo_first_truck_in_time']:"N/A",
+                            row['tokyo_first_truck_in_name']!=null?row['tokyo_first_truck_in_name']:"N/A"
+                        ]);
                     })
                 }
             });
-            // if (!$.fn.DataTable.isDataTable('#reportTwoTable')) {
-            //     $("#reportTwoTable").DataTable({
-            //         dom: 'Bfrtip',
-            //         buttons: [
-            //             'copy', 'csv', 'excel', 'pdf', 'print'
-            //         ]
-            //     });
-            // }
+            // Destroy existing DataTable if it exists
+            if ($.fn.DataTable.isDataTable('#reportTwoTable')) {
+                $('#reportTwoTable').DataTable().clear().destroy();
+            }
+
             $("#reportTwoTable").DataTable({
                 dom: 'Bfrtip',
                 buttons: [
-                    'copy', 'csv', 'excel', 'pdf', 'print'
+                    'copy', 'csv', 'excel', 'pdf', 'print',
+                ],
+                exportOptions: {
+                    title: null
+                },
+                data: tableData, // Use the prepared data array
+                columns: [
+                    { title: "Date" },
+                    { title: "Pump Car" },
+                    { title: "Plant" },
+                    { title: "Site" },
+                    { title: "Plant Out Time" },
+                    { title: "Site In Time" },
+                    { title: "Pump Idle Time" },
+                    { title: "First Truck In Time" },
+                    { title: "Truck Name" }
                 ]
             });
             $("#loader").css("display","none")
