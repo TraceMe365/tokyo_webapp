@@ -253,7 +253,7 @@
                 columns: [
                     { title: "Date" },
                     { title: "Vehicle Name" },
-                    { title: "Location Name" },
+                    { title: "Plant Name" },
                     { title: "Site Name" },
                     { title: "Plant Out Time" },
                     { title: "Site In Time" },
