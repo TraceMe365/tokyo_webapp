@@ -27,6 +27,7 @@ return new class extends Migration
             $table->time('tokyo_site_duration')->nullable(true);
             $table->string('tokyo_site_plant_out_site_in_duration')->nullable(true);
             $table->string('tokyo_site_out_plan_in_duration')->nullable(true);
+            $table->string('tokyo_site_out_plan_out_duration')->nullable(true);
             $table->timestamps();
         });
     }

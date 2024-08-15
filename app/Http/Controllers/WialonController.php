@@ -172,7 +172,7 @@ class WialonController extends Controller
             // Get plant and vehicle details for duration
             if($to>$from && $plant!=null){
                 if($plant=='peliyagoda'){
-                    $plants = ['Peliyagoda Yard','Tokyo SUERMIX Peliyagoda'];
+                    $plants = ['Peliyagoda Yard','Tokyo SUERMIX Peliyagoda','Tokyo_Rathmalana Plant'];
                     DB::table('report_one')->truncate();
                     $result = $this->getPeliyagodaYardData($from,$to);
                     if(isset($result['reportResult']['tables'][0]['rows'])){
@@ -226,36 +226,43 @@ class WialonController extends Controller
                             for($i=0;$i<count($reportOneData)-1;$i+=2){
                                 $newRecord = [];
                                 if(in_array($reportOneData[$i]['tokyo_location_name'],$plants)){
-                                    // First Record
-                                    $firstRecord                       = $reportOneData[$i];
-                                    $newRecord['tokyo_vehicle_id']     = $firstRecord['tokyo_vehicle_id'];
-                                    $newRecord['tokyo_vehicle_name']   = $firstRecord['tokyo_vehicle_name'];
-                                    $newRecord['tokyo_location_name']  = $firstRecord['tokyo_location_name'];
-                                    $newRecord['tokyo_plant_out_time'] = $firstRecord['tokyo_plant_out_time'];
-                                    $newRecord['tokyo_site_name']      = $firstRecord['tokyo_site_name'];
-                                    $newRecord['tokyo_site_in_time']   = $firstRecord['tokyo_site_in_time'];
-                                    
-                                    // Second Record 
-                                    $secondRecord = $reportOneData[$i+1];
-                                    $newRecord['tokyo_plant_in_time']  = $secondRecord['tokyo_site_in_time'];
-                                    $newRecord['tokyo_site_out_time']  = $secondRecord['tokyo_plant_out_time'];
-                                    
-                                    // Site Idle Time
-                                    $site_in = $firstRecord['tokyo_site_in_time'];
-                                    $site_out =$secondRecord['tokyo_plant_out_time'];
-                                    $newRecord['tokyo_site_duration'] = $this->getTimeDifference($site_out,$site_in);
-                                    
-                                    // Site Out Plant In
-                                    $plant_in_2 = $secondRecord['tokyo_site_in_time'];
-                                    $site_out_2 = $secondRecord['tokyo_plant_out_time'];
-                                    $newRecord['tokyo_site_out_plan_in_duration']  = $this->getTimeDifference($plant_in_2,$site_out_2);
+                                    if($reportOneData[$i]['tokyo_vehicle_name'] == $reportOneData[$i+1]['tokyo_vehicle_name']){
+                                        // First Record
+                                        $firstRecord                       = $reportOneData[$i];
+                                        $newRecord['tokyo_vehicle_id']     = $firstRecord['tokyo_vehicle_id'];
+                                        $newRecord['tokyo_vehicle_name']   = $firstRecord['tokyo_vehicle_name'];
+                                        $newRecord['tokyo_location_name']  = $firstRecord['tokyo_location_name'];
+                                        $newRecord['tokyo_plant_out_time'] = $firstRecord['tokyo_plant_out_time'];
+                                        $newRecord['tokyo_site_name']      = $firstRecord['tokyo_site_name'];
+                                        $newRecord['tokyo_site_in_time']   = $firstRecord['tokyo_site_in_time'];
+                                        
+                                        // Second Record 
+                                        $secondRecord = $reportOneData[$i+1];
+                                        $newRecord['tokyo_plant_in_time']  = $secondRecord['tokyo_site_in_time'];
+                                        $newRecord['tokyo_site_out_time']  = $secondRecord['tokyo_plant_out_time'];
+                                        
+                                        // Site Idle Time
+                                        $site_in = $firstRecord['tokyo_site_in_time'];
+                                        $site_out =$secondRecord['tokyo_plant_out_time'];
+                                        $newRecord['tokyo_site_duration'] = $this->getTimeDifference($site_out,$site_in);
+                                        
+                                        // Site Out Plant In
+                                        $plant_in_2 = $secondRecord['tokyo_site_in_time'];
+                                        $site_out_2 = $firstRecord['tokyo_plant_out_time'];
+                                        $newRecord['tokyo_site_out_plan_in_duration']  = $this->getTimeDifference($plant_in_2,$site_out_2);
 
-                                    // Plant In Site Out
-                                    $plant_out = $firstRecord['tokyo_plant_out_time'];
-                                    $site_in = $firstRecord['tokyo_site_in_time'];
-                                    $newRecord['tokyo_site_plant_out_site_in_duration'] = $this->getTimeDifference($site_in,$plant_out);
+                                        // Plant In Site Out
+                                        $plant_out = $firstRecord['tokyo_plant_out_time'];
+                                        $site_in = $firstRecord['tokyo_site_in_time'];
+                                        $newRecord['tokyo_site_plant_out_site_in_duration'] = $this->getTimeDifference($site_in,$plant_out);
 
-                                    ReportOneFiltered::create($newRecord);
+                                        // Plant Out Site Out (Real Idling Time)
+                                        $plant_out = $firstRecord['tokyo_plant_out_time'];
+                                        $site_out_2 = $secondRecord['tokyo_plant_out_time'];
+                                        $newRecord['tokyo_site_out_plan_out_duration'] = $this->getTimeDifference($site_out_2,$plant_out);
+
+                                        ReportOneFiltered::create($newRecord);
+                                    }
                                 }
                             }
                             $data = ReportOneFiltered::get();

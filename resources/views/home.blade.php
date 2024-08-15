@@ -99,8 +99,6 @@
                     <th>Site Out Time</th>
                     <th>Plant In Time</th>
                     <th>Duration (Site Out Time - Plant Out Time) </th>
-                    <th>Site Idle (Site Out Time - Site In Time) </th>
-                    <th>Duration from Plant to Site (Site In Time - Plant Out) </th>
                 </tr>
                 </thead>
                 <tbody id="reportOneTableBody">
@@ -231,9 +229,7 @@
                             <td>${row['tokyo_site_in_time']!=null?row['tokyo_site_in_time']:"N/A"}</td>
                             <td>${row['tokyo_site_out_time']!=null?row['tokyo_site_out_time']:"N/A"}</td>
                             <td>${row['tokyo_plant_in_time']!=null?row['tokyo_plant_in_time']:"N/A"}</td>
-                            <td>${row['tokyo_site_out_plan_in_duration']!=null?row['tokyo_site_out_plan_in_duration']:"N/A"}</td>
-                            <td>${row['tokyo_site_duration']!=null?row['tokyo_site_duration']:"N/A"}</td>
-                            <td>${row['tokyo_site_plant_out_site_in_duration']!=null?row['tokyo_site_plant_out_site_in_duration']:"N/A"}</td>
+                            <td>${row['tokyo_site_out_plan_out_duration']!=null?row['tokyo_site_out_plan_out_duration']:"N/A"}</td>
                         </tr>`);    
                     })
                 }
@@ -249,8 +245,11 @@
             $("#reportOneTable").DataTable({
                 dom: 'Bfrtip',
                 buttons: [
-                    'copy', 'csv', 'excel', 'pdf', 'print'
-                ]
+                    'copy', 'csv', 'excel', 'pdf', 'print',
+                ],
+                exportOptions: {
+                    title: null
+                }
             });
             $("#loader").css("display","none")
         })
